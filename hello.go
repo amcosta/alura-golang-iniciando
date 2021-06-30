@@ -1,15 +1,21 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
+const inputSites = "sites.txt"
+const logFile = "log.txt"
+
 func main() {
-	exercicio()
-	start()
+	nome := "Monitor de sites"
+	versao := 1.1
+	fmt.Println("Iniciando o programa", nome, "versão", versao)
 
 	for {
 		option := selectedOption()
@@ -18,7 +24,7 @@ func main() {
 		case 1:
 			startMonitoring()
 		case 2:
-			fmt.Println("Logs...")
+			showLogs()
 		case 0:
 			fmt.Println("Saindo...")
 			os.Exit(0)
@@ -27,12 +33,6 @@ func main() {
 			os.Exit(-1)
 		}
 	}
-}
-
-func start() {
-	nome := "Monitor de sites"
-	versao := 1.1
-	fmt.Println("Iniciando o programa", nome, "versão", versao)
 }
 
 func selectedOption() int {
@@ -47,27 +47,53 @@ func selectedOption() int {
 }
 
 func startMonitoring() {
-	sites := []string{
-		"https://www.alura.com.br",
-		"https://www.caelum.com.br",
-		"https://random-status-code.herokuapp.com",
+	file, err := os.Open(inputSites)
+	if err != nil {
+		fmt.Println(err)
 	}
 
-	for i := 1; i <= 3; i++ {
-		for _, site := range sites {
-			response, _ := http.Get(site)
+	reader := bufio.NewScanner(file)
+	for reader.Scan() {
+		site := reader.Text()
 
-			if response.StatusCode == 200 {
-				fmt.Println("Site:", site, "Ok!")
-			} else {
-				fmt.Println("Site:", site, "Falhou!")
-			}
+		response, err := http.Get(site)
+		if err != nil {
+			fmt.Println(err)
 		}
 
-		time.Sleep(5 * time.Second)
+		if response.StatusCode == 200 {
+			writeLog(site, true)
+		} else {
+			writeLog(site, false)
+		}
 	}
+
+	file.Close()
 }
 
-func exercicio() {
+func writeLog(site string, online bool) {
+	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	if err != nil {
+		fmt.Println(err)
+	}
 
+	date := time.Now().Format("2006-01-02 15:04:05")
+	line := "[" + date + "] " + site + " - Online: " + strconv.FormatBool(online) + "\n"
+	file.WriteString(line)
+
+	file.Close()
+}
+
+func showLogs() {
+	file, err := os.Open(logFile)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
+
+	file.Close()
 }
