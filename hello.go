@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 )
 
 func main() {
+	exercicio()
 	start()
 
 	for {
@@ -45,14 +47,27 @@ func selectedOption() int {
 }
 
 func startMonitoring() {
-	fmt.Println("Monitorando...")
-
-	url := "https://www.alura.com.br"
-	response, _ := http.Get(url)
-
-	if response.StatusCode == 200 {
-		fmt.Println("Site:", url, "Ok!")
-	} else {
-		fmt.Println("Site:", url, "Falhou!")
+	sites := []string{
+		"https://www.alura.com.br",
+		"https://www.caelum.com.br",
+		"https://random-status-code.herokuapp.com",
 	}
+
+	for i := 1; i <= 3; i++ {
+		for _, site := range sites {
+			response, _ := http.Get(site)
+
+			if response.StatusCode == 200 {
+				fmt.Println("Site:", site, "Ok!")
+			} else {
+				fmt.Println("Site:", site, "Falhou!")
+			}
+		}
+
+		time.Sleep(5 * time.Second)
+	}
+}
+
+func exercicio() {
+
 }
